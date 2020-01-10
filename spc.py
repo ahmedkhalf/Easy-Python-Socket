@@ -5,12 +5,18 @@ import threading
 SERVER = 0
 CLIENT = 1
 
+_exposed_functions = {}
+
 _start_args = {
     'host': 'localhost',
     'port': 55555,
 }
 
-class Server:
+# --------------- #
+# Private Classes #
+# --------------- #
+
+class _server:
     def __init__(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client_list = {}
@@ -27,7 +33,7 @@ class Server:
         self.socket.listen(10)
 
 
-class Client:
+class _client:
     def __init__(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -35,13 +41,43 @@ class Client:
         self.socket.bind((_start_args['host'], _start_args['port']))
         self.socket.listen(10)
 
+# ---------------- #
+# Public Functions #
+# ---------------- #
 
 def start(mode, **kwargs):
     _start_args.update(kwargs)
     
     if mode == SERVER:
-        server = Server()
+        server = _server()
         server.start(_start_args)
     else:
-        client = Client()
+        client = _client()
         client.start(_start_args)
+
+
+def expose(name_or_function=None):
+    # Deal with '@spc.expose()' - treat as '@spc.expose'
+    if name_or_function is None:
+        return expose
+
+    if type(name_or_function) == str:   # Called as '@spc.expose("my_name")'
+        name = name_or_function
+
+        def decorator(function):
+            _expose(name, function)
+            return function
+        return decorator
+    else:
+        function = name_or_function
+        _expose(function.__name__, function)
+        return function
+
+# ----------------- #
+# Private Functions #
+# ----------------- #
+
+def _expose(name, function):
+    msg = 'Already exposed function with name "%s"' % name
+    assert name not in _exposed_functions, msg
+    _exposed_functions[name] = function
