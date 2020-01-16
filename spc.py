@@ -47,7 +47,8 @@ class _client:
 
 def start(mode, **kwargs):
     _start_args.update(kwargs)
-    
+
+    global _network_class
     if mode == SERVER:
         _network_class = _server()
         _network_class.start(_start_args)
