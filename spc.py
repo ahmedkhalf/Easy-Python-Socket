@@ -5,6 +5,7 @@ import threading
 SERVER = 0
 CLIENT = 1
 
+_network_class = None # Either _server or _client class
 _exposed_functions = {}
 
 _start_args = {
@@ -38,8 +39,7 @@ class _client:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def start(self, _start_args):
-        self.socket.bind((_start_args['host'], _start_args['port']))
-        self.socket.listen(10)
+        self.socket.connect((_start_args['host'], _start_args['port']))
 
 # ---------------- #
 # Public Functions #
@@ -49,11 +49,19 @@ def start(mode, **kwargs):
     _start_args.update(kwargs)
     
     if mode == SERVER:
-        server = _server()
-        server.start(_start_args)
+        _network_class = _server()
+        _network_class.start(_start_args)
     else:
-        client = _client()
-        client.start(_start_args)
+        _network_class = _client()
+        _network_class.start(_start_args)
+
+
+def getSocketType():
+    # Returns SERVER, CLIENT, or None
+    if _network_class is not None:
+        if type(_network_class) == _client:
+            return CLIENT
+        return SERVER
 
 
 def expose(name_or_function=None):
