@@ -1,2 +1,2 @@
-# Super-Python-Communicator
-Inter process communication in python made easy!
+# Easy Python Socket
+Socket communication in python made easy!
